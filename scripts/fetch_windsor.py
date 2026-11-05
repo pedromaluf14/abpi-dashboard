@@ -117,8 +117,9 @@ def code_of(name):
 
 
 def key_of(r):
-    """Imóvel do anúncio (código no nome do criativo); sem código, a campanha."""
-    return code_of(r.get("ad_name")) or r.get("campaign")
+    """Imóvel do anúncio: código no nome do criativo; se não tiver, código no nome da campanha;
+    se nenhum dos dois tiver (ex.: engajamento), o nome da campanha."""
+    return code_of(r.get("ad_name")) or code_of(r.get("campaign")) or r.get("campaign")
 
 
 def main() -> int:
