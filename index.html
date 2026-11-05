@@ -1,0 +1,362 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ABPI · Imóveis no ar</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Epilogue:wght@400;500;600;700;800&display=swap">
+<style>/* Paleta LUZIAC: grafite + magenta pontual. Mesmo visual dos painéis Lopes. */
+:root{
+  color-scheme: dark;
+  --bg:#0D0D0E; --card:#171718; --card-2:#1F1F21; --card-3:#2A2A2C;
+  --line:rgba(255,255,255,.07); --line-2:rgba(255,255,255,.13);
+  --ink:#F5F5F7; --ink-soft:#C2C2CA; --muted:#85858F;
+  --pink:#FB2576; --pink-300:#FF8DB9; --pink-700:#B3165A; --pink-soft:rgba(251,37,118,.13);
+  --good:#3DDC97; --bad:#FF6B6B;
+  --r:14px;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){ color-scheme:dark; } }
+:root[data-theme="dark"]{ color-scheme:dark; }
+*,*::before,*::after{ box-sizing:border-box; }
+html,body{ margin:0; }
+body{ background:var(--bg); color:var(--ink); font-family:"Epilogue",-apple-system,"Segoe UI",sans-serif; font-size:14px; line-height:1.5;
+  padding:18px 24px 56px; font-variant-numeric:tabular-nums; -webkit-font-smoothing:antialiased; position:relative; overflow-x:hidden; }
+h1,h2,h3{ margin:0; text-wrap:balance; }
+button{ font:inherit; color:inherit; }
+:focus-visible{ outline:2px solid var(--pink); outline-offset:2px; }
+[hidden]{ display:none !important; }
+.wrap{ max-width:1080px; margin:0 auto; display:flex; flex-direction:column; gap:18px; position:relative; z-index:1; }
+
+.sky{ position:absolute; left:0; right:0; top:0; height:760px; overflow:hidden; pointer-events:none; z-index:0;
+  -webkit-mask-image:linear-gradient(#000 60%,transparent); mask-image:linear-gradient(#000 60%,transparent); }
+.blob{ position:absolute; border-radius:50%; filter:blur(100px); }
+.b1{ width:620px; height:480px; right:-180px; top:-220px; background:rgba(251,37,118,.14); }
+.b2{ width:520px; height:420px; left:-220px; top:-140px; background:rgba(255,255,255,.04); }
+.dots{ position:absolute; inset:0; background-image:linear-gradient(rgba(255,255,255,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.025) 1px,transparent 1px); background-size:44px 44px; }
+
+/* topo */
+.nav{ display:flex; align-items:center; justify-content:space-between; gap:16px; }
+.client{ display:inline-flex; align-items:center; gap:10px; background:#fff; color:#111; border-radius:8px; height:40px; padding:0 14px; }
+.client b{ font-weight:800; font-size:17px; letter-spacing:.03em; }
+.client span{ font-size:12.5px; color:#555; }
+.by{ display:flex; align-items:center; gap:8px; color:var(--muted); font-size:12px; }
+.by img{ height:22px; width:auto; display:block; }
+
+.hero{ display:flex; align-items:flex-end; justify-content:space-between; gap:20px; flex-wrap:wrap; padding-top:22px; }
+.tag{ display:inline-flex; align-items:center; gap:8px; font-size:11.5px; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-soft);
+  border:1px solid var(--line-2); border-radius:6px; padding:4px 10px; }
+.tag .v{ color:var(--pink); font-weight:700; }
+.live-dot{ width:7px; height:7px; border-radius:50%; background:var(--good); box-shadow:0 0 0 0 rgba(61,220,151,.6); animation:pulse 2s infinite; }
+@keyframes pulse{ 70%{ box-shadow:0 0 0 7px rgba(61,220,151,0); } 100%{ box-shadow:0 0 0 0 rgba(61,220,151,0); } }
+.hero h1{ font-size:clamp(30px,5vw,46px); line-height:1.05; font-weight:700; letter-spacing:-.02em; margin-top:12px; }
+.hero h1 .soft{ color:var(--muted); font-weight:500; }
+.hero .sub{ color:var(--muted); margin-top:8px; }
+.seg{ display:inline-flex; background:var(--card); border:1px solid var(--line); border-radius:9px; padding:3px; }
+.seg button{ border:0; background:none; color:var(--ink-soft); font-weight:500; font-size:13.5px; padding:7px 14px; border-radius:7px; cursor:pointer; }
+.seg button.active{ background:#fff; color:#111; font-weight:600; }
+
+/* cartões */
+.card{ background:var(--card); border:1px solid var(--line); border-radius:var(--r); padding:18px; }
+.card-h{ display:flex; align-items:baseline; justify-content:space-between; gap:12px; margin-bottom:14px; flex-wrap:wrap; }
+.card-h h2{ font-size:17px; font-weight:600; }
+.card-sub{ color:var(--muted); font-size:12.5px; }
+
+.kpis{ display:grid; grid-template-columns:repeat(4,1fr); gap:12px; }
+.kpi{ display:flex; flex-direction:column; gap:4px; }
+.kpi .label{ font-size:11.5px; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); }
+.kpi .value{ font-size:28px; font-weight:700; letter-spacing:-.01em; }
+.kpi .delta{ font-size:12.5px; color:var(--muted); display:flex; gap:6px; align-items:baseline; flex-wrap:wrap; }
+.chg{ font-weight:600; }
+.up-good,.down-good{ color:var(--good); } .up-bad,.down-bad{ color:var(--bad); } .neutral{ color:var(--ink-soft); }
+
+/* imóveis no ar */
+.props{ display:grid; grid-template-columns:repeat(auto-fill,minmax(232px,1fr)); gap:14px; }
+.prop{ background:var(--card-2); border:1px solid var(--line); border-radius:12px; overflow:hidden; display:flex; flex-direction:column; }
+.media{ position:relative; aspect-ratio:4/5; background:var(--card-3); border:0; padding:0; cursor:pointer; display:block; width:100%; overflow:hidden; }
+.media img{ width:100%; height:100%; object-fit:cover; display:block; transition:transform .4s ease; }
+.media:hover img{ transform:scale(1.03); }
+.media .play{ position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); width:56px; height:56px; border-radius:50%;
+  background:rgba(13,13,14,.62); backdrop-filter:blur(6px); display:grid; place-items:center; border:1px solid rgba(255,255,255,.25); }
+.media .play svg{ width:20px; height:20px; fill:#fff; margin-left:3px; }
+.media .noimg{ position:absolute; inset:0; display:grid; place-items:center; color:var(--muted); font-size:12px; }
+.media .count{ position:absolute; right:10px; bottom:10px; font-size:11.5px; background:rgba(13,13,14,.7); border-radius:5px; padding:2px 8px; }
+.onair{ position:absolute; left:10px; top:10px; display:inline-flex; align-items:center; gap:6px; font-size:11px; font-weight:700; letter-spacing:.08em;
+  background:rgba(13,13,14,.72); border-radius:5px; padding:3px 8px; }
+.prop-b{ padding:14px; display:flex; flex-direction:column; gap:10px; }
+.prop-t{ display:flex; align-items:baseline; justify-content:space-between; gap:8px; }
+.code{ font-size:19px; font-weight:700; letter-spacing:.02em; }
+.price{ color:var(--pink-300); font-weight:600; font-size:13.5px; white-space:nowrap; }
+.stats{ display:grid; grid-template-columns:repeat(3,1fr); gap:6px; border-top:1px solid var(--line); padding-top:10px; }
+.stats div{ display:flex; flex-direction:column; }
+.stats dt{ font-size:10.5px; letter-spacing:.07em; text-transform:uppercase; color:var(--muted); }
+.stats dd{ margin:0; font-weight:600; font-size:15px; }
+.stats dd.lead{ color:var(--pink); }
+.empty{ color:var(--muted); padding:18px 0; text-align:center; }
+
+/* saíram do ar */
+.off{ display:flex; flex-direction:column; }
+.off-row{ display:grid; grid-template-columns:1fr auto auto; gap:16px; align-items:center; padding:10px 0; border-top:1px solid var(--line); }
+.off-row:first-child{ border-top:0; }
+.off-row .c{ font-weight:600; } .off-row .c span{ color:var(--muted); font-weight:400; margin-left:8px; }
+.off-row .m{ color:var(--muted); font-size:12.5px; text-align:right; }
+
+.row2{ display:grid; grid-template-columns:2fr 1fr; gap:14px; }
+.chart{ width:100%; height:200px; display:block; }
+.chart text{ fill:var(--muted); font-size:10.5px; font-family:inherit; }
+.eng-big{ font-size:30px; font-weight:700; }
+.eng-l{ color:var(--muted); font-size:12.5px; }
+.eng-list{ display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:16px; border-top:1px solid var(--line); padding-top:14px; }
+.eng-list dt{ font-size:10.5px; letter-spacing:.07em; text-transform:uppercase; color:var(--muted); }
+.eng-list dd{ margin:0; font-weight:600; font-size:16px; }
+
+footer{ display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap; color:var(--muted); font-size:11.5px; letter-spacing:.06em; padding-top:8px; }
+
+/* modal do vídeo */
+.modal{ position:fixed; inset:0; z-index:50; background:rgba(0,0,0,.78); display:grid; place-items:center; padding:16px; }
+.modal-box{ background:var(--card); border:1px solid var(--line-2); border-radius:14px; width:min(420px,100%); max-height:calc(100vh - 32px);
+  display:flex; flex-direction:column; overflow:hidden; }
+.modal-h{ display:flex; align-items:center; justify-content:space-between; gap:10px; padding:12px 14px; border-bottom:1px solid var(--line); }
+.modal-h b{ font-size:16px; } .modal-h .price{ margin-left:8px; }
+.x{ border:0; background:var(--card-3); width:32px; height:32px; border-radius:8px; cursor:pointer; font-size:18px; line-height:1; }
+.frame{ flex:1; min-height:0; overflow:auto; background:#fff; }
+.frame iframe{ width:100%; height:640px; border:0; display:block; }
+.frame .fallback{ background:var(--card); }
+.frame .fallback img{ width:100%; display:block; }
+.modal-f{ display:flex; gap:8px; padding:12px 14px; border-top:1px solid var(--line); flex-wrap:wrap; align-items:center; }
+.btn{ display:inline-flex; align-items:center; gap:6px; border:1px solid var(--line-2); background:var(--card-2); color:var(--ink); border-radius:8px;
+  padding:7px 12px; font-size:13px; text-decoration:none; cursor:pointer; }
+.btn.primary{ background:var(--pink); border-color:var(--pink); color:#fff; font-weight:600; }
+.vnav{ margin-left:auto; display:flex; gap:6px; align-items:center; color:var(--muted); font-size:12.5px; }
+
+@media (max-width:860px){ .kpis{ grid-template-columns:repeat(2,1fr); } .row2{ grid-template-columns:1fr; } }
+@media (max-width:520px){
+  body{ padding:14px 16px 40px; }
+  .client span, .by span{ display:none; }
+  .props{ grid-template-columns:1fr 1fr; gap:10px; }
+  .prop-b{ padding:10px; } .code{ font-size:16px; } .price{ font-size:12px; }
+  .prop-t{ flex-direction:column; gap:0; }
+  .stats{ grid-template-columns:1fr 1fr; } .stats div:last-child{ display:none; }
+  .kpi .value{ font-size:23px; }
+  .off-row{ grid-template-columns:1fr auto; } .off-row .m.hide-sm{ display:none; }
+}
+</style>
+</head>
+<body>
+<div class="sky" aria-hidden="true"><div class="blob b1"></div><div class="blob b2"></div><div class="dots"></div></div>
+<div class="wrap">
+  <nav class="nav">
+    <span class="client"><b>ABPI</b><span>Bora pra Indaiatuba</span></span>
+    <span class="by"><span>by</span><img src="assets/logo-luziac-branco.png" alt="LUZIAC marketing imobiliário"></span>
+  </nav>
+
+  <header class="hero">
+    <div>
+      <span class="tag"><span class="live-dot"></span><span class="v" id="live-count">—</span>imóveis no ar agora</span>
+      <h1>Imóveis no ar,<br><span class="soft">e como estão indo.</span></h1>
+      <p class="sub" id="period-label">Carregando…</p>
+    </div>
+    <div class="seg" role="group" aria-label="Período">
+      <button class="active" data-p="7d">Últimos 7 dias</button>
+      <button data-p="mes">Este mês</button>
+    </div>
+  </header>
+
+  <section class="kpis">
+    <div class="kpi card"><span class="label">Leads</span><span class="value" id="k-leads">—</span><span class="delta" id="k-leads-d"></span></div>
+    <div class="kpi card"><span class="label">Custo por lead</span><span class="value" id="k-cpl">—</span><span class="delta" id="k-cpl-d"></span></div>
+    <div class="kpi card"><span class="label">Investimento</span><span class="value" id="k-spend">—</span><span class="delta" id="k-spend-d"></span></div>
+    <div class="kpi card"><span class="label">Pessoas alcançadas</span><span class="value" id="k-reach">—</span><span class="delta" id="k-reach-d"></span></div>
+  </section>
+
+  <section class="card">
+    <div class="card-h"><h2>Imóveis rodando agora</h2><span class="card-sub">Toque no vídeo para assistir · números do período escolhido</span></div>
+    <div class="props" id="props"></div>
+  </section>
+
+  <section class="card" id="off-card" hidden>
+    <div class="card-h"><h2>Saíram do ar</h2><span class="card-sub" id="off-sub">Imóveis anunciados recentemente que não têm anúncio ativo hoje</span></div>
+    <div class="off" id="off"></div>
+  </section>
+
+  <section class="row2">
+    <div class="card">
+      <div class="card-h"><h2>Leads por dia</h2><span class="card-sub" id="chart-sub"></span></div>
+      <svg class="chart" id="chart" role="img" aria-label="Leads por dia"></svg>
+    </div>
+    <div class="card" id="eng-card">
+      <div class="card-h"><h2>Topo do funil</h2><span class="card-sub" id="eng-sub">Campanha de engajamento</span></div>
+      <div class="eng-big" id="eng-reach">—</div>
+      <div class="eng-l">pessoas alcançadas pela campanha de engajamento</div>
+      <dl class="eng-list">
+        <div><dt>Impressões</dt><dd id="eng-impr">—</dd></div>
+        <div><dt>Investimento</dt><dd id="eng-spend">—</dd></div>
+      </dl>
+    </div>
+  </section>
+
+  <footer><span>DADOS · META ADS VIA WINDSOR.AI · ATUALIZA DE HORA EM HORA</span><span id="foot-updated"></span></footer>
+</div>
+
+<div class="modal" id="modal" hidden role="dialog" aria-modal="true" aria-labelledby="m-title">
+  <div class="modal-box">
+    <div class="modal-h"><div><b id="m-title"></b><span class="price" id="m-price"></span></div><button class="x" id="m-close" aria-label="Fechar">×</button></div>
+    <div class="frame" id="m-frame"></div>
+    <div class="modal-f">
+      <a class="btn primary" id="m-meta" target="_blank" rel="noopener">Abrir prévia do anúncio</a>
+      <a class="btn" id="m-ig" target="_blank" rel="noopener">Ver no Instagram</a>
+      <span class="vnav" id="m-nav"></span>
+    </div>
+  </div>
+</div>
+
+<script>/* ===== Painel ABPI · imóveis no ar =====
+   Lê metrics.json (gravado de hora em hora pelo GitHub Action a partir do Windsor.ai).
+   O imóvel é o código no nome do criativo (ex.: CA00230). Tudo é reflexo do Meta:
+   lead = "Leads (formulário)", CPL = investimento ÷ leads do período. */
+
+/* Preço manual, caso o imóvel não tenha campanha com "[CÓDIGO] - R$ ..." no nome. Ex.: { 'CA00999':'R$ 980.000' } */
+const PRICE_OVERRIDE = {};
+/* "Saíram do ar": imóveis sem anúncio ativo que tiveram gasto nos últimos N dias */
+const OFF_DAYS = 30;
+
+const DAY=864e5, toD=s=>new Date(s+'T12:00:00Z'), iso=d=>d.toISOString().slice(0,10);
+const add=(s,k)=>iso(new Date(toD(s).getTime()+k*DAY));
+const ymd=s=>s.split('-').map(Number);
+const MES=['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+const MESES=['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+const fD=s=>{ const [,m,d]=ymd(s); return d+'/'+MES[m-1]; };
+const fRange=(a,b)=>{ const A=ymd(a),B=ymd(b); return a===b?fD(a):(A[1]===B[1]?A[2]+' a '+fD(b):fD(a)+' a '+fD(b)); };
+const brl=(v,d=0)=>(v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL',minimumFractionDigits:d,maximumFractionDigits:d});
+const int=v=>Math.round(v||0).toLocaleString('pt-BR');
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const pct=v=>{ const r=Math.round(v*100); return (r>0?'+':r<0?'−':'')+Math.abs(r)+'%'; };
+function chg(cur,prev,goodUp){ if(!(prev>0)||cur==null) return ''; const d=cur/prev-1, r=Math.round(d*100);
+  const cls=goodUp==null||r===0?'neutral':(d>0?(goodUp?'up-good':'up-bad'):(goodUp?'down-bad':'down-good'));
+  return `<span class="chg ${cls}">${pct(d)}</span>`; }
+function sum(daily,a,b){ const r=[0,0,0,0]; for(const d in daily||{}) if(d>=a&&d<=b){ const v=daily[d]; for(let i=0;i<4;i++) r[i]+=v[i]; } return {spend:r[0],impr:r[1],clicks:r[2],leads:r[3]}; }
+const cplOf=x=>x.leads>0?x.spend/x.leads:null;
+
+let M, P='7d', R;
+function ranges(){
+  const T=M.today, Y=add(T,-1);
+  if(P==='7d') return { cur:[add(T,-7),Y], prev:[add(T,-14),add(T,-8)], reach:'last7', reachPrev:'prev7',
+    label:'Últimos 7 dias completos ('+fRange(add(T,-7),Y)+') · comparado aos 7 anteriores', cmp:'7 dias antes' };
+  const [yy,mm,dd]=ymd(Y), first=Y.slice(0,8)+'01';
+  const pm=mm===1?[yy-1,12]:[yy,mm-1], pmDays=new Date(Date.UTC(pm[0],pm[1],0)).getUTCDate();
+  const ps=`${pm[0]}-${String(pm[1]).padStart(2,'0')}-01`;
+  return { cur:[first,Y], prev:[ps, ps.slice(0,8)+String(Math.min(dd,pmDays)).padStart(2,'0')], reach:'month', reachPrev:null,
+    label:cap(MESES[mm-1])+' até ontem ('+fRange(first,Y)+') · comparado ao mesmo trecho de '+MESES[pm[1]-1], cmp:'mês passado' };
+}
+const cap=s=>s.charAt(0).toUpperCase()+s.slice(1);
+
+function render(){
+  R=ranges();
+  $('#period-label').textContent=R.label;
+  const c=sum(M.daily,...R.cur), p=sum(M.daily,...R.prev), cc=cplOf(c), pc=cplOf(p);
+  $('#k-leads').textContent=int(c.leads);
+  $('#k-leads-d').innerHTML=chg(c.leads,p.leads,true)+`<span>${int(p.leads)} no ${R.cmp==='mês passado'?'mês passado':'período anterior'}</span>`;
+  $('#k-cpl').textContent=cc==null?'—':brl(cc,2);
+  $('#k-cpl-d').innerHTML=cc!=null&&pc!=null?chg(cc,pc,false)+`<span>${brl(pc,2)} antes</span>`:'';
+  $('#k-spend').textContent=brl(c.spend);
+  $('#k-spend-d').innerHTML=chg(c.spend,p.spend,null)+`<span>${brl(p.spend)} antes</span>`;
+  const rc=(M.reach||{})[R.reach], rp=R.reachPrev?(M.reach||{})[R.reachPrev]:null;
+  $('#k-reach').textContent=rc?int(rc):'—';
+  $('#k-reach-d').innerHTML=rp?chg(rc,rp,true)+`<span>${int(rp)} antes</span>`:'<span>sem soma dia a dia, igual ao Meta</span>';
+  renderProps(); renderOff(); renderChart(); renderEng();
+}
+
+function propList(){ return Object.entries(M.props||{}).map(([code,p])=>({ code, ...p, price:PRICE_OVERRIDE[code]||p.price, m:sum(p.daily,...R.cur) })); }
+
+const PLAY='<svg viewBox="0 0 24 24"><path d="M7 4.5v15l13-7.5z"/></svg>';
+function renderProps(){
+  const live=propList().filter(p=>p.live).sort((a,b)=>b.m.leads-a.m.leads||b.m.spend-a.m.spend||a.code.localeCompare(b.code));
+  $('#live-count').textContent=live.length;
+  $('#props').innerHTML=live.length?live.map(p=>{
+    const v=(p.videos||[])[0], cpl=cplOf(p.m);
+    return `<article class="prop">
+      <button class="media" data-code="${esc(p.code)}" aria-label="Assistir ao vídeo do imóvel ${esc(p.code)}">
+        ${v&&v.thumb?`<img src="${esc(v.thumb)}" alt="" loading="lazy">`:''}
+        <span class="onair"><span class="live-dot"></span>NO AR</span>
+        <span class="play">${PLAY}</span>
+        ${(p.videos||[]).length>1?`<span class="count">${p.videos.length} vídeos</span>`:''}
+      </button>
+      <div class="prop-b">
+        <div class="prop-t"><span class="code">${esc(p.code)}</span>${p.price?`<span class="price">${esc(p.price)}</span>`:''}</div>
+        <dl class="stats">
+          <div><dt>Leads</dt><dd class="lead">${int(p.m.leads)}</dd></div>
+          <div><dt>CPL</dt><dd>${cpl==null?'—':brl(cpl)}</dd></div>
+          <div><dt>Investido</dt><dd>${brl(p.m.spend)}</dd></div>
+        </dl>
+      </div></article>`; }).join('')
+    :'<p class="empty">Nenhum imóvel com anúncio ativo agora.</p>';
+}
+
+function renderOff(){
+  const since=add(M.today,-OFF_DAYS);
+  const off=propList().filter(p=>!p.live).map(p=>{ const days=Object.keys(p.daily||{}).filter(d=>p.daily[d][0]>0).sort(); return {...p, last:days[days.length-1]}; })
+    .filter(p=>p.last&&p.last>=since).sort((a,b)=>b.last.localeCompare(a.last));
+  $('#off-card').hidden=!off.length;
+  $('#off').innerHTML=off.map(p=>`<div class="off-row"><span class="c">${esc(p.code)}${p.price?`<span>${esc(p.price)}</span>`:''}</span>
+    <span class="m hide-sm">${int(p.m.leads)} ${p.m.leads===1?'lead':'leads'} no período</span><span class="m">último dia no ar: ${fD(p.last)}</span></div>`).join('');
+}
+
+function renderChart(){
+  const [a,b]=R.cur, days=[]; for(let s=a;s<=b;s=add(s,1)) days.push(s);
+  const vals=days.map(d=>((M.daily||{})[d]||[0,0,0,0])[3]);
+  $('#chart-sub').textContent='Conta inteira · '+fRange(a,b);
+  const svg=$('#chart'), W=svg.clientWidth||600, H=200, pl=26, pb=22, pt=10, mx=Math.max(4,...vals);
+  const step=Math.ceil(mx/4), top=step*4, bw=(W-pl)/days.length;
+  let g='';
+  for(let i=0;i<=4;i++){ const y=pt+(H-pt-pb)*(1-i/4); g+=`<line x1="${pl}" x2="${W}" y1="${y}" y2="${y}" stroke="var(--line)"/><text x="${pl-6}" y="${y+3}" text-anchor="end">${i*step}</text>`; }
+  const every=Math.ceil(days.length/8);
+  days.forEach((d,i)=>{ const h=(H-pt-pb)*vals[i]/top, x=pl+i*bw+bw*.18, w=Math.max(2,bw*.64);
+    g+=`<rect x="${x}" y="${H-pb-h}" width="${w}" height="${h}" rx="2" fill="var(--pink)"><title>${fD(d)}: ${vals[i]} leads</title></rect>`;
+    if(i%every===0) g+=`<text x="${x+w/2}" y="${H-6}" text-anchor="middle">${ymd(d)[2]}</text>`; });
+  svg.setAttribute('viewBox',`0 0 ${W} ${H}`); svg.innerHTML=g;
+}
+
+function renderEng(){
+  const e=(M.engagement||{})[P==='7d'?'last7':'month'];
+  $('#eng-card').hidden=!e||!(e.impr>0);
+  if(!e) return;
+  $('#eng-sub').textContent='Campanha de engajamento · '+(P==='7d'?'7 dias':'este mês');
+  $('#eng-reach').textContent=int(e.reach); $('#eng-impr').textContent=int(e.impr); $('#eng-spend').textContent=brl(e.spend);
+}
+
+/* ---------- vídeo ---------- */
+let curProp=null, curIdx=0;
+function igEmbed(u){ const m=(u||'').match(/instagram\.com\/(?:p|reel)\/([^/?#]+)/); return m?`https://www.instagram.com/p/${m[1]}/embed/`:null; }
+function openVideo(code,idx=0){
+  const p=propList().find(x=>x.code===code); if(!p) return;
+  curProp=p; curIdx=idx; const vs=p.videos||[], v=vs[idx]||{};
+  $('#m-title').textContent=p.code; $('#m-price').textContent=p.price||'';
+  const emb=igEmbed(v.ig);
+  $('#m-frame').innerHTML=emb?`<iframe src="${esc(emb)}" title="Vídeo do imóvel ${esc(p.code)}" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen loading="lazy"></iframe>`
+    :`<div class="fallback">${v.thumb?`<img src="${esc(v.thumb)}" alt="">`:''}</div>`;
+  const meta=$('#m-meta'), ig=$('#m-ig');
+  meta.hidden=!v.preview; if(v.preview) meta.href=v.preview;
+  ig.hidden=!v.ig; if(v.ig) ig.href=v.ig;
+  $('#m-nav').innerHTML=vs.length>1?`<button class="btn" data-n="-1" aria-label="Vídeo anterior">‹</button>${idx+1} de ${vs.length}<button class="btn" data-n="1" aria-label="Próximo vídeo">›</button>`:'';
+  $('#modal').hidden=false; $('#m-close').focus();
+}
+function closeVideo(){ $('#modal').hidden=true; $('#m-frame').innerHTML=''; }
+document.addEventListener('click',e=>{
+  const m=e.target.closest('.media'); if(m){ openVideo(m.dataset.code); return; }
+  const n=e.target.closest('[data-n]'); if(n&&curProp){ const L=curProp.videos.length; openVideo(curProp.code,(curIdx+Number(n.dataset.n)+L)%L); return; }
+  if(e.target.id==='modal'||e.target.closest('#m-close')) closeVideo();
+});
+document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&!$('#modal').hidden) closeVideo(); });
+$$('.seg button').forEach(b=>b.addEventListener('click',()=>{ P=b.dataset.p; $$('.seg button').forEach(x=>x.classList.toggle('active',x===b)); render(); }));
+let rt; window.addEventListener('resize',()=>{ clearTimeout(rt); rt=setTimeout(()=>M&&renderChart(),150); });
+
+fetch('metrics.json?t='+Date.now()).then(r=>r.json()).then(j=>{ M=j;
+  const u=new Date(j.updatedAt);
+  $('#foot-updated').textContent='ATUALIZADO '+u.toLocaleString('pt-BR',{timeZone:'America/Sao_Paulo',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}).replace(',',' ÀS');
+  render(); })
+ .catch(()=>{ $('#period-label').textContent='Não foi possível carregar os dados agora. Tente atualizar a página em instantes.'; });
+</script>
+</body>
+</html>
