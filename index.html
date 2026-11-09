@@ -310,6 +310,9 @@ footer{ display:flex; justify-content:space-between; flex-wrap:wrap; gap:6px; fo
 [data-mode="light"] .pill-select optgroup{ background:#F4F2F3; color:#85848A; }
 [data-mode="light"] .seg-btn{ background:#fff; }
 [data-mode="light"] .seg-btn:hover,[data-mode="light"] .clear-btn:hover{ color:var(--ink); border-color:rgba(20,18,20,.3); }
+/* botão selecionado não muda ao passar o mouse (senão a letra some no fundo escuro) */
+.seg-btn.active:hover{ color:#111; border-color:#fff; }
+[data-mode="light"] .seg-btn.active:hover{ color:#fff; border-color:var(--ink); }
 [data-mode="light"] .clear-btn{ background:#fff; }
 [data-mode="light"] .cmp-toggle input{ background:rgba(20,18,20,.15); } [data-mode="light"] .cmp-toggle input:checked{ background:var(--pink); }
 [data-mode="light"] .datebox{ border-color:var(--line-2); }
