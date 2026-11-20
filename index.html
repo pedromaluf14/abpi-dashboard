@@ -482,6 +482,8 @@ footer{ display:flex; justify-content:space-between; flex-wrap:wrap; gap:6px; fo
         <div class="seg" id="vg-periods">
           <button type="button" class="seg-btn active" data-p="cur" title="Os 7 dias completos mais recentes. O dia de hoje não entra.">Últimos 7 dias</button>
           <button type="button" class="seg-btn" data-p="month" title="Do dia 1 até ontem, comparado com o mesmo período do mês anterior. O dia de hoje não entra.">Este mês</button>
+          <button type="button" class="seg-btn" data-p="last" title="O mês anterior inteiro, comparado com o mês antes dele.">Mês passado</button>
+          <button type="button" class="seg-btn" data-p="all" title="Tudo desde o primeiro dia de anúncio (do imóvel escolhido ou da conta) até ontem.">Desde o início</button>
           <button type="button" class="seg-btn" data-p="custom">Personalizado</button>
         </div>
         <button type="button" class="clear-btn" id="vg-clear" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>Limpar filtros</button>
@@ -792,9 +794,12 @@ function rangeOf(per, rng){
   if (per==='cur') return { a:L7[0], b:L7[1], pa:P7[0], pb:P7[1] };
   if (per==='month') return { a:MON[0], b:MON[1], pa:MONP[0], pb:MONP[1] };
   if (per==='last') return { a:LM[0], b:LM[1], pa:LMP[0], pb:LMP[1] };
+  if (per==='all'){ const e=vgProduct==='all'?ACC:byId[vgProduct], a=firstDay(e.camps); return { a, b:Y, pa:null, pb:null, len:diff(a,Y)+1 }; }
   const [a,b]=rng, len=diff(a,b)+1, pa=add(a,-len), ok=pa>=DATA_START;
   return { a, b, pa:ok?pa:null, pb:ok?add(a,-1):null, len };
 }
+/* primeiro dia com investimento ou resultado (início de "Desde o início") */
+function firstDay(camps){ let f=null; for (const c of camps){ const dd=M.daily[c]; if (!dd) continue; for (const d in dd){ if (d<=Y && (!f||d<f)) f=d; } } return f||Y; }
 function periodRange(){ return rangeOf(vgPeriod, vgRange); }
 function viewData(e, per, rng){
   const R=rangeOf(per,rng), m=agg(e.camps,R.a,R.b), o=R.pa?agg(e.camps,R.pa,R.pb):null;
@@ -805,22 +810,23 @@ function viewData(e, per, rng){
   return { R, m, o, days, sel, series:ser(e.camps,days,3), spend:ser(e.camps,days,0) };
 }
 function vgData(e){ return viewData(e, vgPeriod, vgRange); }
-const PER_TAG={ cur:'7 DIAS', month:'ESTE MÊS', last:'MÊS PASSADO', custom:'PERSONALIZADO' };
-function perText(per, R){ return per==='cur'?'Últimos 7 dias':per==='month'?`${cap1(monthName(MON[0]))}, até ontem`:per==='last'?cap1(monthName(LM[0])):fRange(R.a,R.b); }
+const PER_TAG={ cur:'7 DIAS', month:'ESTE MÊS', last:'MÊS PASSADO', all:'DESDE O INÍCIO', custom:'PERSONALIZADO' };
+function perText(per, R){ return per==='cur'?'Últimos 7 dias':per==='month'?`${cap1(monthName(MON[0]))}, até ontem`:per==='last'?cap1(monthName(LM[0])):per==='all'?'Desde o início ('+fRange(R.a,R.b)+')':fRange(R.a,R.b); }
 function periodLabel(R, withPrev){
-  const base = vgPeriod==='custom' ? fRange(R.a,R.b) : fRange(R.a,R.b)+', sem contar hoje';
+  const base = (vgPeriod==='custom'||vgPeriod==='last') ? fRange(R.a,R.b) : fRange(R.a,R.b)+', sem contar hoje';
   return base + (withPrev&&R.pa ? ' · vs. '+fRange(R.pa,R.pb) : '');
 }
+const R0 = () => periodRange();
 function summary(isAll,e,m,o){
   const c=cpl(m.spend,m.leads), cost=c?` a ${brl(c,2)} cada`:'';
   const mesNome=monthName(MON[0]), mesAnt=monthName(MONP[0]);
   if (!isAll){
     const up=o&&o.leads&&m.leads>o.leads ? ` São ${pct(m.leads/o.leads-1).replace('+','')} a mais que no período anterior.`:'';
-    const when=vgPeriod==='cur'?'nos últimos 7 dias':vgPeriod==='month'?`em ${mesNome}, até ontem`:'no período escolhido';
+    const when=vgPeriod==='cur'?'nos últimos 7 dias':vgPeriod==='month'?`em ${mesNome}, até ontem`:vgPeriod==='last'?`em ${monthName(LM[0])}`:vgPeriod==='all'?`desde o início dos anúncios (${fD(R0().a)})`:'no período escolhido';
     return `${e.label} teve ${leadsTxt(m.leads)}${cost} ${when}.${up}`;
   }
-  const lead = vgPeriod==='cur'?'Semana':vgPeriod==='month'?`${cap1(mesNome)}, até ontem,`:'Período';
-  let txt=`${lead} com ${leadsTxt(m.leads)}${cost}.`;
+  const lead = vgPeriod==='cur'?'Semana':vgPeriod==='month'?`${cap1(mesNome)}, até ontem,`:vgPeriod==='last'?cap1(monthName(LM[0])):vgPeriod==='all'?'Desde o início, foram':'Período';
+  let txt=vgPeriod==='all'?`${lead} ${leadsTxt(m.leads)}${cost}.`:`${lead} com ${leadsTxt(m.leads)}${cost}.`;
   if (vgPeriod==='cur'){
     const top=prods.slice().sort((a,b)=>b.cur.leads-a.cur.leads)[0];
     if (top && top.cur.leads>0){ txt+=` ${top.label} liderou com ${leadsTxt(top.cur.leads)}`;
@@ -841,7 +847,7 @@ function renderVG(){
   $('#vg-period').textContent = periodLabel(V.R, cmpOn) + (isAll?'':' · '+e.label+(e.ended?' (fora do ar)':''));
   $('#vg-clear').hidden = isAll && vgPeriod==='cur';
   $('#vg-leads').textContent=int(m.leads);
-  $('#vg-title-period').textContent = vgPeriod==='cur'?'nos últimos 7 dias':vgPeriod==='month'?`em ${monthName(MON[0])}`:(V.R.a===V.R.b?`em ${fD(V.R.a)}`:`de ${fRange(V.R.a,V.R.b)}`);
+  $('#vg-title-period').textContent = vgPeriod==='cur'?'nos últimos 7 dias':vgPeriod==='month'?`em ${monthName(MON[0])}`:vgPeriod==='last'?`em ${monthName(LM[0])}`:vgPeriod==='all'?`desde ${fD(V.R.a)}`:(V.R.a===V.R.b?`em ${fD(V.R.a)}`:`de ${fRange(V.R.a,V.R.b)}`);
   $('#vg-summary').textContent = summary(isAll,e,m,o);
   $('#today-leads').textContent=leadsTxt(e.today.leads); $('#today-spend').textContent=brl(e.today.spend)+' investidos';
   $('#vg-leads-d').innerHTML = o ? `<span class="prev">${int(o.leads)} no período anterior</span>`+(o.leads?chg(m.leads/o.leads-1,true):'') : '';
@@ -872,9 +878,9 @@ function renderSaldo(){
 /* =============== IMÓVEIS NO AR =============== */
 const PLAY='<svg viewBox="0 0 24 24"><path d="M7 4.5v15l13-7.5z"/></svg>';
 function renderProps(){
-  const R=periodRange(), when=perText(vgPeriod,R).toLowerCase();
+  const R=periodRange(), when=vgPeriod==='all'?'o início':perText(vgPeriod,R).toLowerCase();
   const list=prods.map(p=>({p, m:agg(p.camps,R.a,R.b)})).sort((a,b)=>b.m.leads-a.m.leads||b.m.spend-a.m.spend||a.p.label.localeCompare(b.p.label));
-  $('#props-sub').textContent=`${prods.length} ${prods.length===1?'imóvel':'imóveis'} com anúncio ativo agora · números de ${when} · toque no vídeo para assistir`;
+  $('#props-sub').textContent=`${prods.length} ${prods.length===1?'imóvel':'imóveis'} com anúncio ativo agora · números ${vgPeriod==='all'?'desde '+fD(R.a):'de '+when} · toque no vídeo para assistir`;
   $('#props').innerHTML=list.length?list.map(({p,m})=>{ const vs=((M.props||{})[p.campaign]||{}).videos||[], v=vs[0], c=cpl(m.spend,m.leads), pr=priceOf(p.campaign);
     return `<article class="prop ${vgProduct===p.id?'sel':''}">
       <button type="button" class="media" data-code="${esc(p.campaign)}" aria-label="Assistir ao vídeo do imóvel ${esc(p.label)}">
@@ -906,7 +912,7 @@ function renderEng(){
   const k=vgPeriod==='month'?'month':'last7', e=(M.engagement||{})[k];
   $('#eng-card').hidden = vgProduct!=='all' || !e || !(e.impr>0);
   if (!e) return;
-  $('#eng-sub').textContent='Campanha de engajamento · '+(k==='month'?`${cap1(monthName(MON[0]))}, até ontem`:'últimos 7 dias'+(vgPeriod==='custom'||vgPeriod==='last'?' (dado fixo do Meta)':''));
+  $('#eng-sub').textContent='Campanha de engajamento · '+(k==='month'?`${cap1(monthName(MON[0]))}, até ontem`:'últimos 7 dias'+(vgPeriod==='custom'||vgPeriod==='last'||vgPeriod==='all'?' (dado fixo do Meta)':''));
   $('#eng-reach').textContent=int(e.reach); $('#eng-impr').textContent=int(e.impr); $('#eng-spend').textContent=brl(e.spend);
 }
 /* vídeo: toca o post do Instagram do anúncio dentro do painel; prévia do Meta como alternativa */
@@ -925,7 +931,7 @@ function closeVideo(){ $('#modal').hidden=true; $('#m-frame').innerHTML=''; }
 const GENDER={ female:'Feminino', male:'Masculino', unknown:'Não informado' };
 function renderWho(){
   const k=vgPeriod==='month'?'month':'last7', B=(M.breakdown||{})[k]||{};
-  $('#who-sub').textContent = k==='month' ? `${cap1(monthName(MON[0]))}, até ontem` : 'Últimos 7 dias'+(vgPeriod==='custom'?' (dado fixo do Meta)':'');
+  $('#who-sub').textContent = k==='month' ? `${cap1(monthName(MON[0]))}, até ontem` : 'Últimos 7 dias'+(vgPeriod==='custom'||vgPeriod==='last'||vgPeriod==='all'?' (dado fixo do Meta)':'');
   const gd={}; Object.entries(B.gender||{}).forEach(([g,v])=>{ const l=GENDER[g]||g; gd[l]=(gd[l]||0)+v; });
   const order=['18-24','25-34','35-44','45-54','55-64','65+'], ad={};
   order.forEach(a=>{ if ((B.age||{})[a]) ad[a]=B.age[a]; });
